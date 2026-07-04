@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة الإدارة الذكية | الصيدلية البيطرية</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --primary-gold: #c5a059;
+            --accent-gold: #e2b65d;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(197, 160, 89, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow-x: hidden;
+        }
+
+        /* خلفية جمالية متدرجة */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 400px;
+            background: radial-gradient(circle at 50% -20%, rgba(197, 160, 89, 0.15), transparent 70%);
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px 20px;
+            flex: 1;
+        }
+
+        /* الهيدر الرئيسي */
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            position: relative;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: -0.5px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #fff 30%, var(--primary-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        /* خط ذهبي فاصل أسفل الهيدر */
+        .gold-divider {
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary-gold), transparent);
+            margin: 20px auto 0;
+            border-radius: 2px;
+        }
+
+        /* شبكة التحكم */
+        .hub-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        /* تصميم الكروت الاحترافي بلمسات ذهبية */
+        .hub-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 35px 25px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+        }
+
+        /* تأثير الخط الذهبي العلوي عند التحويم */
+        .hub-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(90deg, transparent, var(--primary-gold), transparent);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .hub-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary-gold);
+            box-shadow: 0 15px 40px -10px rgba(197, 160, 89, 0.2);
+        }
+
+        .hub-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            display: inline-block;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+
+        .card-desc {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            flex-grow: 1;
+        }
+
+        /* الأزرار الفاخرة */
+        .btn-hub {
+            background: linear-gradient(135deg, var(--card-bg), #1e293b);
+            color: var(--primary-gold);
+            border: 1px solid var(--primary-gold);
+            padding: 12px 28px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .hub-card:hover .btn-hub {
+            background: linear-gradient(135deg, var(--primary-gold), var(--accent-gold));
+            color: var(--bg-dark);
+            box-shadow: 0 4px 15px rgba(197, 160, 89, 0.3);
+            border-color: transparent;
+        }
+
+        /* بار المزامنة السفلي الذكي */
+        .system-status {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid var(--border-color);
+            padding: 15px 25px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(8px);
+            font-size: 0.9rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-muted);
+        }
+
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            background: #090d16;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>بوابة الإدارة والتحكم المتقدم الموحدة 🐾</h1>
+        <p>صيدلية الدكتور أحمد البيطرية — فاقوس (النظام السحابي الذكي)</p>
+        <div class="gold-divider"></div>
+    </header>
+
+    <div class="hub-grid">
+        <!-- الكرت الأول: لوحة الفواتير والشحن -->
+        <div class="hub-card">
+            <div>
+                <span class="card-icon">📊</span>
+                <h2 class="card-title">لوحة الطلبات والفواتير الحية</h2>
+                <p class="card-desc">متابعة فورية لفواتير الأيام، استعراض بيانات العملاء، إدارة الكوبونات المتطورة، وإعداد تسعيرات المحافظات ومواعيد التسليم.</p>
+            </div>
+            <a href="orders.html" class="btn-hub">الدخول للوحة الفواتير ←</a>
+        </div>
+
+        <!-- الكرت الثاني: لوحة الإدارة عن بعد -->
+        <div class="hub-card">
+            <div>
+                <span class="card-icon">⚙️</span>
+                <h2 class="card-title">لوحة التحكم والتعديل عن بعد</h2>
+                <p class="card-desc">تعديل أسعار الأدوية والكميات المتاحة بالستوك، تفعيل العروض التسويقية الخاصة، إضافة أصناف جديدة، وضبط السلايدر والإعلانات العائمة.</p>
+            </div>
+            <a href="control.html" class="btn-hub">فتح لوحة التحكم والتعديل ←</a>
+        </div>
+
+        <!-- الكرت الثالث: لوحة المحادثات -->
+        <div class="hub-card">
+            <div>
+                <span class="card-icon">🩺</span>
+                <h2 class="card-title">إدارة الاستشارات والمحادثات الطبية</h2>
+                <p class="card-desc">غرفة تحكم فورية لمتابعة رسائل المربيين والعملاء، تتبع ردود الذكاء الاصطناعي التلقائية، والمزامنة المباشرة للردود البيطرية الاحترافية.</p>
+            </div>
+            <a href="chats.html" class="btn-hub">منصة الاستشارات والرسائل ←</a>
+        </div>
+    </div>
+
+    <!-- شريط الحالة الموحد للمشروع -->
+    <div class="system-status">
+        <div class="status-indicator">
+            <div class="pulse-dot"></div>
+            <span>بوابة المزامنة الذكية متصلة ومحدثة على سيرفر شيت جوجل</span>
+        </div>
+        <div style="color: var(--primary-gold); font-weight: 600;" id="liveTime"></div>
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2026 جميع الحقوق محفوظة للإدارة البيطرية — صيدلية د. أحمد الاحترافية</p>
+</footer>
+
+<script>
+    // ساعة رقمية حية لإضفاء طابع الأنظمة الاحترافية المتصلة بالسيرفر
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('liveTime').innerText = now.toLocaleTimeString('ar-EG');
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+</script>
+</body>
+</html>
