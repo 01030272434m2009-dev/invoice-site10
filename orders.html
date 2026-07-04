@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم عن بعد - إدارة الصيدلية البيطرية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #c5a028;
+            --bg: #f4f6f9;
+            --card: #ffffff;
+            --text: #2c3e50;
+            --border: #dcdde1;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --info: #3498db;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding: 20px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        h1 { color: var(--primary); font-size: 1.8rem; }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+        .tab-btn { background: #e0e0e0; border: none; padding: 10px 20px; font-weight: 700; cursor: pointer; border-radius: 4px; transition: all 0.3s; white-space: nowrap; }
+        .tab-btn.active { background: var(--primary); color: white; }
+        
+        .tab-content { display: none; background: var(--card); padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .tab-content.active { display: block; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.95rem; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem; }
+        textarea { height: 80px; resize: vertical; }
+        
+        .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; font-weight: 700; cursor: pointer; border-radius: 4px; transition: background 0.2s; width: 100%; font-size: 1rem; }
+        .btn:hover { background: #ab8a20; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        @media(max-width:768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+        
+        .product-select-box, .slider-box, .offer-box { background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px dashed var(--primary); margin-bottom: 20px; }
+        .slider-card { background: white; border: 1px solid var(--border); border-radius: 6px; padding: 15px; margin-bottom: 15px; position: relative; }
+        .slider-card h4 { color: var(--primary); margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+
+        /* ستايل معاينة شريط وصورة الصنف بشكل شيك جداً */
+        .preview-offer-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 15px; text-align: center; max-width: 280px; margin: 20px auto; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; }
+        .preview-img-container { position: relative; width: 100%; height: 180px; border-radius: 8px; overflow: hidden; margin-bottom: 15px; border: 2px solid #f0f0f0; }
+        .preview-img-container img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* شريط العرض الخاص الملتف حول الصورة بشكل مائل وأنيق */
+        .ribbon-offer { position: absolute; top: 15px; right: -35px; background: var(--danger); color: white; text-align: center; width: 130px; font-size: 0.75rem; font-weight: bold; padding: 4px 0; transform: rotate(45deg); box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 2; letter-spacing: 1px; }
+        .preview-badge { position: absolute; top: 10px; left: 10px; background: var(--info); color: white; padding: 2px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
+        .price-old { text-decoration: line-through; color: #a0a0a0; font-size: 0.9rem; margin-left: 8px; }
+        .price-new { color: var(--danger); font-weight: 700; font-size: 1.2rem; }
+
+        #loading { display:block; position: fixed; top:20px; left:20px; background: #34495e; color: white; padding: 12px 25px; border-radius: 4px; font-weight: bold; z-index: 9999; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body>
+
+    <div id="loading">جاري جلب البيانات من شيت جوجل... ⏳</div>
+
+    <div class="header">
+        <h1>لوحة الإدارة والتحكم عن بعد ⚙️</h1>
+        <div style="font-weight: 700; background: #fffbeb; padding: 5px 15px; border: 1px solid var(--primary); border-radius: 20px; font-size: 0.9rem; color: var(--primary);">متصل مباشر (بدون كلمة سر)</div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(event, 'productsTab')">📦 تعديل الأدوية</button>
+        <button class="tab-btn" onclick="switchTab(event, 'offersTab')">⚡ إدارة عروض المنتجات</button>
+        <button class="tab-btn" onclick="switchTab(event, 'newProductTab')">➕ إضافة صنف جديد</button>
+        <button class="tab-btn" onclick="switchTab(event, 'sliderTab')">🖼️ إدارة السلايدر المتحرك</button>
+        <button class="tab-btn" onclick="switchTab(event, 'settingsTab')">🏢 إعدادات الهوية والتواصل</button>
+        <button class="tab-btn" onclick="switchTab(event, 'promoTab')">⚡ إدارة العرض العائم</button>
+    </div>
+
+    <div id="productsTab" class="tab-content active">
+        <div class="product-select-box">
+            <label>اختر الدواء المراد تعديل بياناته أو أسعاره:</label>
+            <select id="editProductSelector" onchange="loadProductToForm()">
+                <option value="">-- جاري تحميل قائمة الأدوية من السيرفر... --</option>
+            </select>
+        </div>
+        
+        <form id="editProductForm" onsubmit="submitProductEdit(event)" style="display: none;">
+            <input type="hidden" id="edit_id">
+            <div class="grid-2">
+                <div class="form-group"><label>اسم الصنف البيطري:</label><input type="text" id="edit_name" required></div>
+                <div class="form-group">
+                    <label>القسم الرئيسي:</label>
+                    <select id="edit_category">
+                        <option value="دواجن">أدوية دواجن</option>
+                        <option value="مواشي">أدوية مواشي</option>
+                        <option value="فيتامينات">فيتامينات ومكملات</option>
+                        <option value="أليفة">حيوانات أليفة</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group"><label>السعر (ج.م):</label><input type="number" id="edit_price" required></div>
+                <div class="form-group"><label>الكمية المتاحة في الستوك (شيت):</label><input type="number" id="edit_quantity" required></div>
+            </div>
+            <div class="form-group"><label>رابط صورة المنتج (URL):</label><input type="url" id="edit_image" required></div>
+            <div class="form-group"><label>شارة مميزة (مثال: خصم 10% / الأكثر مبيعاً / فارغ):</label><input type="text" id="edit_badge"></div>
+            <div class="form-group"><label>وصف الدواء:</label><textarea id="edit_desc" required></textarea></div>
+            <div class="form-group"><label>بروتوكول وطريقة الاستخدام الجرعة:</label><textarea id="edit_usage"></textarea></div>
+            <div class="form-group"><label>فترة الأمان والانسحاب والتحذيرات:</label><textarea id="edit_safety"></textarea></div>
+            
+            <input type="hidden" id="edit_is_promo">
+            <input type="hidden" id="edit_promo_price">
+            <input type="hidden" id="edit_promo_end">
+
+            <button type="submit" class="btn">حفظ وتحديث بيانات الصنف الحالي في جوجل شيت فوراً</button>
+        </form>
+    </div>
+
+    <div id="offersTab" class="tab-content">
+        <h3 style="margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">⚡ إنشاء وإدارة عروض الأسعار الخاصة للمنتجات</h3>
+        
+        <div class="grid-2">
+            <div>
+                <div class="offer-box">
+                    <label>اختر الصنف لتطبيق العرض عليه أو تعديله:</label>
+                    <select id="offerProductSelector" onchange="loadProductToOfferForm()">
+                        <option value="">-- اختر صنفاً لتطبيق خصم أو عرض خاص عليه --</option>
+                    </select>
+                </div>
+
+                <form id="offerForm" onsubmit="submitProductOffer(event)" style="display: none;">
+                    <div class="form-group">
+                        <label>حالة العرض الخاص على هذا الصنف:</label>
+                        <select id="offer_is_promo" onchange="livePreviewOffer()">
+                            <option value="false">إيقاف العرض (عرض السعر العادي فقط)</option>
+                            <option value="true">تفعيل العرض الخاص (تشغيل الشريط والشطب على السعر)</option>
+                        </select>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>السعر الأصلي الحالي (ج.م):</label>
+                            <input type="number" id="offer_old_price" readonly style="background: #e9ecef; font-weight: bold;">
+                        </div>
+                        <div class="form-group">
+                            <label>السعر الجديد داخل العرض (ج.م):</label>
+                            <input type="number" id="offer_new_price" step="0.01" oninput="livePreviewOffer()">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>تاريخ انتهاء مدة العرض (اختياري):</label>
+                        <input type="date" id="offer_end_date" onchange="livePreviewOffer()">
+                    </div>
+
+                    <button type="submit" class="btn" style="background: var(--danger);">حفظ ونشر العرض الخاص وتفعيل الخصم فورا 🚀</button>
+                </form>
+            </div>
+
+            <div>
+                <label style="text-align: center; display: block; margin-bottom: 5px; font-weight: 700; color: var(--primary);">👀 شكل الصنف على المتجر وتطبيق العرض:</label>
+                <div class="preview-offer-card" id="previewCard">
+                    <div class="preview-img-container">
+                        <div class="ribbon-offer" id="previewRibbon" style="display: none;">عرض خاص</div>
+                        <div class="preview-badge" id="previewBadge">صنف بيطري</div>
+                        <img id="previewImg" src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300" alt="صورة المنتج">
+                    </div>
+                    <h3 id="previewTitle" style="font-size: 1.1rem; margin-bottom: 10px;">اسم الصنف المختار</h3>
+                    <div style="margin-top: 10px;">
+                        <span class="price-old" id="previewOldPrice" style="display: none;">0 ج.م</span>
+                        <span class="price-new" id="previewNewPrice">0 ج.م</span>
+                    </div>
+                    <div id="previewExpiry" style="margin-top: 10px; font-size: 0.8rem; color: var(--danger); font-weight: bold;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="newProductTab" class="tab-content">
+        <h3 style="margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">إضافة صنف دواء جديد للمتجر</h3>
+        <form id="addProductForm" onsubmit="submitNewProduct(event)">
+            <div class="grid-2">
+                <div class="form-group"><label>اسم الصنف البيطري الجديد:</label><input type="text" id="add_name" required></div>
+                <div class="form-group">
+                    <label>القسم:</label>
+                    <select id="add_category">
+                        <option value="دواجن">أدوية دواجن</option>
+                        <option value="مواشي">أدوية مواشي</option>
+                        <option value="فيتامينات">فيتامينات ومكملات</option>
+                        <option value="أليفة">حيوانات أليفة</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group"><label>السعر الحالي (ج.م):</label><input type="number" id="add_price" required></div>
+                <div class="form-group"><label>الكمية الابتدائية بالمخزن:</label><input type="number" id="add_quantity" required></div>
+            </div>
+            <div class="form-group"><label>رابط صورة الدواء المباشر:</label><input type="url" id="add_image" value="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300" required></div>
+            <div class="form-group"><label>شارة مميزة (اختياري):</label><input type="text" id="add_badge" placeholder="مثال: جديد"></div>
+            <div class="form-group"><label>وصف مختصر للمنتج:</label><textarea id="add_desc" required></textarea></div>
+            <div class="form-group"><label>طريقة الاستخدام والجرعات:</label><textarea id="add_usage"></textarea></div>
+            <div class="form-group"><label>فترة الأمان والانسحاب:</label><textarea id="add_safety"></textarea></div>
+            <button type="submit" class="btn" style="background: #2ecc71;">إدراج المنتج الجديد داخل الجداول والسيستم</button>
+        </form>
+    </div>
+
+    <div id="sliderTab" class="tab-content">
+        <h3 style="margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">إدارة البانرات المتحركة في أعلى الواجهة الرئيسيّة</h3>
+        <form id="sliderMasterForm" onsubmit="submitSliders(event)">
+            <div id="slidersContainer"></div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button type="button" class="btn" style="background: #34495e; width: auto;" onclick="addNewSliderCard()">➕ إضافة شريحة (سلايدر) جديدة</button>
+                <button type="submit" class="btn" style="background: #2ecc71; flex: 1;">حفظ ونشر جميع السلايدرات الحالية على الشيت 🚀</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="settingsTab" class="tab-content">
+        <h3 style="margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">تعديل بيانات الهوية ومعلومات الفوتر</h3>
+        <form id="settingsForm" onsubmit="submitSettings(event)">
+            <div class="form-group"><label>اسم الصيدلية الرئيسي:</label><input type="text" id="set_store_name" required></div>
+            <div class="form-group"><label>من نحن (وصف مختصر في الفوتر):</label><textarea id="set_about_us" style="height: 100px;" required></textarea></div>
+            <div class="grid-2">
+                <div class="form-group"><label>رقم هاتف الدعم والتواصل المباشر:</label><input type="text" id="set_contact_phone" required></div>
+                <div class="form-group"><label>البريد الإلكتروني للصيدلية:</label><input type="email" id="set_contact_email" required></div>
+            </div>
+            <div class="form-group"><label>عنوان المقر أو الفروع بالتفصيل:</label><input type="text" id="set_store_address" required></div>
+            <div class="form-group"><label>قائمة الشركاء (افصل بين كل شركة والأخرى بـ علامة |):</label><input type="text" id="set_partners_list" required></div>
+            <div class="form-group"><label>القوانين والسياسات والملاحظات للمشتري (افصل بين كل جملة والأخرى بـ علامة |):</label><textarea id="set_policies_list" required></textarea></div>
+            <button type="submit" class="btn">تحديث إعدادات الموقع بالكامل فوراً</button>
+        </form>
+    </div>
+
+    <div id="promoTab" class="tab-content">
+        <h3 style="margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">إدارة وضبط العرض العائم الذكي (Smart Banner)</h3>
+        <form id="promoForm" onsubmit="submitPromo(event)">
+            <div class="form-group">
+                <label>حالة ظهور البانر في واجهة المستخدم الحالية:</label>
+                <select id="pro_show">
+                    <option value="true">تفعيل وظهور الإعلان فوراً للمستخدمين</option>
+                    <option value="false">إخفاء البانر تماماً وعدم عرضه</option>
+                </select>
+            </div>
+            <div class="form-group"><label>رابط صورة العرض (يفضل مقاس صغير مربع):</label><input type="url" id="pro_image" required></div>
+            <div class="grid-2">
+                <div class="form-group"><label>شارة الإعلان الملونة:</label><input type="text" id="pro_badge" required></div>
+                <div class="form-group"><label>رقم معرف المنتج المرتبط بالعرض (Product ID):</label><input type="number" id="pro_productId" required></div>
+            </div>
+            <div class="form-group"><label>عنوان العرض الرئيسي العريض:</label><input type="text" id="pro_title" required></div>
+            <div class="form-group"><label>تفاصيل العرض الجاذبة للزبون:</label><textarea id="pro_description" required></textarea></div>
+            <button type="submit" class="btn">حفظ ونشر العرض التسويقي على الواجهة</button>
+        </form>
+    </div>
+
+    <script>
+        const SERVER_API_URL = "https://script.google.com/macros/s/AKfycbyIIQFvZ1GvVLWWvWFxEmLwP4ksgXbXO5K8As9PxCh2sIysTkLYVtvu7-WwirC-5NhiJw/exec";
+        
+        let globalDatabase = {};
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function switchTab(evt, tabId) {
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(c => c.classList.remove('active'));
+            const tabs = document.querySelectorAll('.tab-btn');
+            tabs.forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+
+        async function loadAllDatabase() {
+            showLoading(true);
+            try {
+                const response = await fetch(SERVER_API_URL);
+                globalDatabase = await response.json();
+                
+                // 1. تعبئة اختيار الأدوية (تبويب التعديل)
+                const selector = document.getElementById('editProductSelector');
+                selector.innerHTML = '<option value="">-- اختر صنفاً بيطرياً لتعديله من القائمة --</option>';
+                
+                // 2. تعبئة اختيار الأدوية (تبويب العروض الجديد)
+                const offerSelector = document.getElementById('offerProductSelector');
+                offerSelector.innerHTML = '<option value="">-- اختر صنفاً لتطبيق خصم أو عرض خاص عليه --</option>';
+
+                globalDatabase.products.forEach(p => {
+                    const optionTxt = `<option value="${p.id}">${p.name} [ID: ${p.id}]</option>`;
+                    selector.innerHTML += optionTxt;
+                    offerSelector.innerHTML += optionTxt;
+                });
+
+                // 3. تعبئة السلايدرات المتعددة
+                const slidersContainer = document.getElementById('slidersContainer');
+                slidersContainer.innerHTML = '';
+                if(globalDatabase.sliders && globalDatabase.sliders.length > 0) {
+                    globalDatabase.sliders.forEach((slide, index) => {
+                        renderSliderCard(slide.image, slide.title, slide.description, index + 1);
+                    });
+                } else {
+                    addNewSliderCard();
+                }
+
+                // 4. تعبئة فورم الإعدادات
+                const s = globalDatabase.settings;
+                if(s) {
+                    document.getElementById('set_store_name').value = s.store_name || '';
+                    document.getElementById('set_about_us').value = s.about_us || '';
+                    document.getElementById('set_contact_phone').value = s.contact_phone || '';
+                    document.getElementById('set_contact_email').value = s.contact_email || '';
+                    document.getElementById('set_store_address').value = s.store_address || '';
+                    document.getElementById('set_partners_list').value = s.partners_list || '';
+                    document.getElementById('set_policies_list').value = s.policies_list || '';
+                }
+
+                // 5. تعبئة فورم العرض الخاص الحالي
+                const pr = globalDatabase.promo;
+                if(pr) {
+                    document.getElementById('pro_show').value = pr.show.toString() || 'true';
+                    document.getElementById('pro_image').value = pr.image || '';
+                    document.getElementById('pro_badge').value = pr.badge || '';
+                    document.getElementById('pro_productId').value = pr.productId || '';
+                    document.getElementById('pro_title').value = pr.title || '';
+                    document.getElementById('pro_description').value = pr.description || '';
+                }
+
+            } catch (err) {
+                alert("حدث خطأ أثناء جلب البيانات من السيرفر.");
+                console.error(err);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // تعبئة داتا الصنف المختار في تبويب التعديل العادي
+        function loadProductToForm() {
+            const id = document.getElementById('editProductSelector').value;
+            const form = document.getElementById('editProductForm');
+            if(!id) { form.style.display = 'none'; return; }
+            
+            const p = globalDatabase.products.find(item => item.id == id);
+            if(p) {
+                document.getElementById('edit_id').value = p.id;
+                document.getElementById('edit_name').value = p.name;
+                document.getElementById('edit_category').value = p.category;
+                document.getElementById('edit_price').value = p.price;
+                document.getElementById('edit_quantity').value = p.quantity;
+                document.getElementById('edit_image').value = p.image;
+                document.getElementById('edit_badge').value = p.badge || '';
+                document.getElementById('edit_desc').value = p.desc;
+                document.getElementById('edit_usage').value = p.usage || '';
+                document.getElementById('edit_safety').value = p.safety || '';
+                
+                // الاحتفاظ بالداتا المخفية للعروض عند عمل تعديل بيانات عادي
+                document.getElementById('edit_is_promo').value = p.is_promo || 'false';
+                document.getElementById('edit_promo_price').value = p.promo_price || '';
+                document.getElementById('edit_promo_end').value = p.promo_end || '';
+                
+                form.style.display = 'block';
+            }
+        }
+
+        // تعبئة البيانات في تبويب العروض الخاص والمعاينة الحية له
+        function loadProductToOfferForm() {
+            const id = document.getElementById('offerProductSelector').value;
+            const form = document.getElementById('offerForm');
+            if(!id) { form.style.display = 'none'; return; }
+
+            const p = globalDatabase.products.find(item => item.id == id);
+            if(p) {
+                document.getElementById('offer_old_price').value = p.price;
+                document.getElementById('offer_is_promo').value = (p.is_promo === true || p.is_promo === 'true') ? 'true' : 'false';
+                document.getElementById('offer_new_price').value = p.promo_price || '';
+                document.getElementById('offer_end_date').value = p.promo_end ? p.promo_end.split('T')[0] : '';
+                form.style.display = 'block';
+                
+                livePreviewOffer();
+            }
+        }
+
+        // المعاينة الحية والأنيقة جداً لكرت الصنف
+        function livePreviewOffer() {
+            const id = document.getElementById('offerProductSelector').value;
+            const p = globalDatabase.products.find(item => item.id == id);
+            if(!p) return;
+
+            const isPromo = document.getElementById('offer_is_promo').value === 'true';
+            const newPrice = document.getElementById('offer_new_price').value;
+            const endDate = document.getElementById('offer_end_date').value;
+
+            document.getElementById('previewTitle').innerText = p.name;
+            document.getElementById('previewImg').src = p.image;
+            document.getElementById('previewBadge').innerText = p.category || "صنف بيطري";
+
+            if(isPromo && newPrice) {
+                document.getElementById('previewRibbon').style.display = 'block';
+                document.getElementById('previewOldPrice').style.display = 'inline-block';
+                document.getElementById('previewOldPrice').innerText = p.price + ' ج.م';
+                document.getElementById('previewNewPrice').innerText = newPrice + ' ج.م';
+                if(endDate) {
+                    document.getElementById('previewExpiry').innerText = `⏳ ينتهي في: ${endDate}`;
+                } else {
+                    document.getElementById('previewExpiry').innerText = '';
+                }
+            } else {
+                document.getElementById('previewRibbon').style.display = 'none';
+                document.getElementById('previewOldPrice').style.display = 'none';
+                document.getElementById('previewNewPrice').innerText = p.price + ' ج.م';
+                document.getElementById('previewExpiry').innerText = '';
+            }
+        }
+
+        // دالة إرسال تعديل العرض الخاص للسيرفر وشيت جوجل
+        async function submitProductOffer(e) {
+            e.preventDefault();
+            const id = document.getElementById('offerProductSelector').value;
+            const p = globalDatabase.products.find(item => item.id == id);
+            if(!p) return;
+
+            showLoading(true);
+
+            // نجهز كامل الأوبجكت لإرساله لـ updateProduct مع الحفاظ على البيانات القديمة وتغيير داتا العرض
+            const updatedProductData = {
+                id: p.id,
+                name: p.name,
+                category: p.category,
+                price: p.price,
+                quantity: p.quantity,
+                image: p.image,
+                badge: p.badge,
+                desc: p.desc,
+                usage: p.usage,
+                safety: p.safety,
+                // قيم الخصم والعرض الجديدة:
+                is_promo: document.getElementById('offer_is_promo').value,
+                promo_price: parseFloat(document.getElementById('offer_new_price').value) || "",
+                promo_end: document.getElementById('offer_end_date').value || ""
+            };
+
+            await sendPostRequest({ action: "updateProduct", data: updatedProductData }, "تم تحديث وإطلاق العرض الخاص على هذا الصنف بنجاح! ⚡");
+        }
+
+        async function submitProductEdit(e) {
+            e.preventDefault();
+            showLoading(true);
+            const data = {
+                id: document.getElementById('edit_id').value,
+                name: document.getElementById('edit_name').value,
+                category: document.getElementById('edit_category').value,
+                price: parseFloat(document.getElementById('edit_price').value),
+                quantity: parseInt(document.getElementById('edit_quantity').value),
+                image: document.getElementById('edit_image').value,
+                badge: document.getElementById('edit_badge').value,
+                desc: document.getElementById('edit_desc').value,
+                usage: document.getElementById('edit_usage').value,
+                safety: document.getElementById('edit_safety').value,
+                // الحفاظ على داتا العروض دون تغيير عند تعديل الصنف من التبويب الأساسي
+                is_promo: document.getElementById('edit_is_promo').value,
+                promo_price: document.getElementById('edit_promo_price').value,
+                promo_end: document.getElementById('edit_promo_end').value
+            };
+
+            await sendPostRequest({ action: "updateProduct", data: data }, "تم تحديث بيانات الدواء على الشيت بنجاح! ✅");
+        }
+
+        // باقي دوال الأكواد والبانرات كما هي
+        function renderSliderCard(image = '', title = '', desc = '', number = 1) {
+            const container = document.getElementById('slidersContainer');
+            const cardId = 'slider_card_' + Date.now() + Math.floor(Math.random() * 1000);
+            
+            const html = `
+                <div class="slider-card" id="${cardId}">
+                    <h4>بانر عرض رقم <span class="slide-num">${number}</span></h4>
+                    <div class="form-group">
+                        <label>رابط صورة البانر (يفضل مقاس عريض 1000x400):</label>
+                        <input type="url" class="slide_image" value="${image}" required>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>العنوان الرئيسي العريض:</label>
+                            <input type="text" class="slide_title" value="${title}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>الوصف الجاذب أو التفاصيل:</label>
+                            <input type="text" class="slide_desc" value="${desc}" required>
+                        </div>
+                    </div>
+                    <button type="button" style="background: var(--danger); padding: 5px 10px; font-size:0.85rem; width:auto; border-radius:3px; color:white; border:none; cursor:pointer;" onclick="removeSliderCard('${cardId}')">🗑️ حذف هذا البانر</button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        function addNewSliderCard() {
+            const currentCount = document.querySelectorAll('.slider-card').length;
+            renderSliderCard('', '', '', currentCount + 1);
+        }
+
+        function removeSliderCard(id) {
+            const card = document.getElementById(id);
+            if(card) {
+                card.remove();
+                document.querySelectorAll('.slider-card').forEach((c, idx) => {
+                    c.querySelector('.slide-num').innerText = idx + 1;
+                });
+            }
+        }
+
+        async function submitSliders(e) {
+            e.preventDefault();
+            showLoading(true);
+            const cards = document.querySelectorAll('.slider-card');
+            const slidersData = [];
+            cards.forEach(card => {
+                slidersData.push({
+                    image: card.querySelector('.slide_image').value,
+                    title: card.querySelector('.slide_title').value,
+                    description: card.querySelector('.slide_desc').value
+                });
+            });
+            await sendPostRequest({ action: "updateSliders", data: slidersData }, "تم حفظ وتحديث البانرات المتحركة بنجاح على شيت جوجل! 🖼️");
+            await loadAllDatabase();
+        }
+
+        async function submitNewProduct(e) {
+            e.preventDefault();
+            showLoading(true);
+            const data = {
+                name: document.getElementById('add_name').value,
+                category: document.getElementById('add_category').value,
+                price: parseFloat(document.getElementById('add_price').value),
+                quantity: parseInt(document.getElementById('add_quantity').value),
+                image: document.getElementById('add_image').value,
+                badge: document.getElementById('add_badge').value,
+                desc: document.getElementById('add_desc').value,
+                usage: document.getElementById('add_usage').value,
+                safety: document.getElementById('add_safety').value
+            };
+            await sendPostRequest({ action: "addProduct", data: data }, "تم إضافة الدواء الجديد وربطه بالجدول بنجاح! 🎉");
+            document.getElementById('addProductForm').reset();
+        }
+
+        async function submitSettings(e) {
+            e.preventDefault();
+            showLoading(true);
+            const data = [
+                { key: "store_name", value: document.getElementById('set_store_name').value },
+                { key: "about_us", value: document.getElementById('set_about_us').value },
+                { key: "contact_phone", value: document.getElementById('set_contact_phone').value },
+                { key: "contact_email", value: document.getElementById('set_contact_email').value },
+                { key: "store_address", value: document.getElementById('set_store_address').value },
+                { key: "partners_list", value: document.getElementById('set_partners_list').value },
+                { key: "policies_list", value: document.getElementById('set_policies_list').value }
+            ];
+            await sendPostRequest({ action: "updateSettings", data: data }, "تم تحديث إعدادات وهوية المتجر بالكامل بنجاح! ⚙️");
+        }
+
+        async function submitPromo(e) {
+            e.preventDefault();
+            showLoading(true);
+            const data = {
+                show: document.getElementById('pro_show').value,
+                image: document.getElementById('pro_image').value,
+                badge: document.getElementById('pro_badge').value,
+                productId: parseInt(document.getElementById('pro_productId').value),
+                title: document.getElementById('pro_title').value,
+                description: document.getElementById('pro_description').value
+            };
+            await sendPostRequest({ action: "updatePromo", data: data }, "تم تحديث وإطلاق البانر الإعلاني العائم بنجاح! 🚀");
+        }
+
+        async function sendPostRequest(payload, successMsg) {
+            try {
+                const response = await fetch(SERVER_API_URL, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    body: JSON.stringify(payload)
+                });
+                const res = await response.json();
+                if(res.success) {
+                    alert(successMsg);
+                    await loadAllDatabase();
+                } else {
+                    alert("رفض السيرفر الطلب، خطأ: " + res.error);
+                }
+            } catch (err) {
+                alert("فشل الاتصال بالسيرفر؛ يرجى التحقق من خط الـ Apps Script.");
+                console.error(err);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadAllDatabase();
+        });
+    </script>
+</body>
+</html>

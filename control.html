@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم الاحترافية والتحكم المتقدم - الصيدلية البيطرية</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --accent: #c5a059;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --text: #334155;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        * { box-sizing: border-box; margin:0; padding:0; font-family: 'Cairo', sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding: 20px; }
+        .container { max-width: 1600px; margin: 0 auto; }
+        
+        header { 
+            background: var(--primary); 
+            color: #fff; 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin-bottom: 30px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .header-buttons { display: flex; gap: 10px; }
+        
+        .grid { display: grid; grid-template-columns: 1fr; gap: 25px; }
+        @media(min-width: 1200px) { .grid { grid-template-columns: 2.5fr 1fr; } }
+        
+        .card { background: var(--card); border: 1px solid var(--border); padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .card-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 20px; color: var(--primary); border-bottom: 2px solid var(--bg); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* فلترة الأيام */
+        .days-container { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; padding: 10px; background: #edf2f7; border-radius: 8px; }
+        .btn-day { background: #fff; color: var(--primary); border: 1px solid var(--primary); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .btn-day.active { background: var(--primary); color: #fff; }
+
+        /* جداول التحكم */
+        .table-responsive { overflow-x: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 900px; }
+        th, td { padding: 14px 12px; border-bottom: 1px solid var(--border); text-align: right; vertical-align: top; }
+        th { background: var(--bg); color: var(--primary); font-weight: 700; }
+        tr.clickable-row { cursor: pointer; transition: background 0.2s; }
+        tr.clickable-row:hover { background-color: #f1f5f9; }
+        
+        /* استمارات التحكم */
+        .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+        .form-group label { font-weight: 600; font-size: 0.9rem; color: #475569; }
+        .form-group input, .form-group select { padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); font-size: 0.95rem; outline: none; width: 100%; }
+        .form-group input:focus, .form-group select:focus { border-color: var(--accent); background-color: #fff; }
+        
+        button { background: var(--primary); color: #fff; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+        button:hover { background: var(--accent); }
+        .btn-refresh { background: var(--accent); }
+        .btn-refresh:hover { background: var(--primary); }
+        .btn-shipping-list { background: #0284c7; }
+        .btn-shipping-list:hover { background: #0369a1; }
+        
+        .status-select { padding: 6px; border-radius: 6px; border: 1px solid var(--border); font-size: 0.85rem; font-weight: 600; background-color: #fff; outline: none; }
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; display: inline-block; margin-top: 5px; }
+        
+        .cart-details-box { background: #f8fafc; padding: 8px; border-radius: 6px; font-size: 0.85rem; border: 1px solid var(--border); }
+        .cart-item-line { display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding: 3px 0; }
+        
+        /* النوافذ المنبثقة (Modal) */
+        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); padding-top: 40px; }
+        .modal-content { background-color: #fff; margin: auto; padding: 30px; border: 1px solid #888; width: 80%; max-width: 700px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; }
+        .close-modal { position: absolute; left: 20px; top: 20px; font-size: 28px; font-weight: bold; cursor: pointer; color: #aaa; }
+        .close-modal:hover { color: #000; }
+
+        /* ستايل الفاتورة للطباعة */
+        .invoice-box { border: 2px solid #e2e8f0; padding: 20px; border-radius: 8px; background: #fff; }
+        .invoice-header { display: flex; justify-content: space-between; border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 20px; }
+        .invoice-details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; font-size: 0.95rem; }
+        
+        .row-flex { display: flex; gap: 10px; }
+        .row-flex .form-group { flex: 1; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1 style="font-size: 1.6rem;">لوحة الإدارة الفورية والتحكم المتقدم 🐾</h1>
+            <p style="font-size: 0.85rem; opacity: 0.9; margin-top: 4px;">صيدلية الدكتور أحمد البيطرية - فاقوس</p>
+        </div>
+        <div class="header-buttons">
+            <button class="btn-shipping-list" onclick="openShippingModal()">شركات الشحن المتعاقد معها 🚚</button>
+            <button class="btn-refresh" onclick="loadDashboardData()">تحديث البيانات الفوري 🔄</button>
+        </div>
+    </header>
+
+    <div class="grid">
+        <div>
+            <div class="card">
+                <div class="card-title">
+                    <span>📅 استعراض الفواتير والطلبات حسب الأيام</span>
+                </div>
+                <div class="days-container" id="daysContainer">
+                    <button class="btn-day active" id="btn-all" onclick="filterOrdersByDay('all')">كل الأيام</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>رقم الطلب / تاريخه</th>
+                                <th>بيانات العميل</th>
+                                <th>العنوان والموعد المختار</th>
+                                <th>الحساب المالي</th>
+                                <th>الحالة الحالية</th>
+                                <th>إجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody">
+                            <tr><td colspan="6" style="text-align:center; padding: 30px;">جاري سحب الطلبات الحية من السيرفر...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+            
+            <div class="card">
+                <div class="card-title">🎟️ إدارة الكوبونات المتقدمة</div>
+                <div class="form-group">
+                    <label>كود الكوبون الجديد (مثال: VET50)</label>
+                    <input type="text" id="newCouponCode" placeholder="اكتب الكود بالإنجليزية">
+                </div>
+                <div class="row-flex">
+                    <div class="form-group">
+                        <label>نسبة الخصم (0.10 تعني 10%)</label>
+                        <input type="number" id="newCouponDiscount" step="0.01" max="1" placeholder="0.20">
+                    </div>
+                    <div class="form-group">
+                        <label>مرات الاستخدام المتاحة</label>
+                        <input type="number" id="couponMaxUses" placeholder="100">
+                    </div>
+                </div>
+                <div class="row-flex">
+                    <div class="form-group">
+                        <label>تاريخ انتهاء الصلاحية</label>
+                        <input type="date" id="couponExpiryDate">
+                    </div>
+                    <div class="form-group">
+                        <label>صالح لمدة (أيام)</label>
+                        <input type="number" id="couponDurationDays" placeholder="7">
+                    </div>
+                </div>
+                <button style="width: 100%; justify-content: center;" onclick="createNewCoupon()">تفعيل وحفظ الكوبون المطور 🎯</button>
+                
+                <h4 style="margin-top:20px; font-size:0.9rem; color: var(--primary);">الكوبونات النشطة:</h4>
+                <ul id="activeCouponsList" style="margin-right:20px; font-size:0.85rem; margin-top:10px; display: flex; flex-direction: column; gap: 5px;"></ul>
+            </div>
+
+            <div class="card">
+                <div class="card-title">🚚 إعدادات الشحن وتكويد المحافظات</div>
+                <div class="form-group">
+                    <label>المحافظة (27 محافظة)</label>
+                    <select id="shipGov">
+                        <option value="">-- اختر المحافظة --</option>
+                        <option value="القاهرة">القاهرة</option><option value="الجيزة">الجيزة</option>
+                        <option value="الأسكندرية">الأسكندرية</option><option value="الشرقية">الشرقية</option>
+                        <option value="الدقهلية">الدقهلية</option><option value="البحيرة">البحيرة</option>
+                        <option value="القليوبية">القليوبية</option><option value="الغربية">الغربية</option>
+                        <option value="المنوفية">المنوفية</option><option value="الفيوم">الفيوم</option>
+                        <option value="كفر الشيخ">كفر الشيخ</option><option value="قنا">قنا</option>
+                        <option value="بني سويف">بني سويف</option><option value="دمياط">دمياط</option>
+                        <option value="أسوان">أسوان</option><option value="الأقصر">الأقصر</option>
+                        <option value="أسيوط">أسيوط</option><option value="سوهاج">سوهاج</option>
+                        <option value="الإسماعيلية">الإسماعيلية</option><option value="السويس">السويس</option>
+                        <option value="بورسعيد">بورسعيد</option><option value="شمال سيناء">شمال سيناء</option>
+                        <option value="جنوب سيناء">جنوب سيناء</option><option value="البحر الأحمر">البحر الأحمر</option>
+                        <option value="الوادي الجديد">الوادي الجديد</option><option value="مطروح">مطروح</option>
+                        <option value="مرسى مطروح">مرسى مطروح</option><option value="غير ذلك">غير ذلك (محافظة أخرى)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>المدينة / المركز / تفاصيل أخرى إذا اخترت غير ذلك</label>
+                    <input type="text" id="shipCity" placeholder="مثال: فاقوس / مركز آخر">
+                </div>
+                <div class="row-flex">
+                    <div class="form-group">
+                        <label>تكلفة التوصيل (ج.م)</label>
+                        <input type="number" id="shipCost" placeholder="40">
+                    </div>
+                    <div class="form-group">
+                        <label>اسم شركة الشحن</label>
+                        <input type="text" id="shipCompany" placeholder="البريد السريع">
+                    </div>
+                </div>
+                <button style="width: 100%; justify-content: center;" onclick="addShippingConfig()">حفظ وتحديث تسعيرة الشحن 🗺️</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">⏰ تكويد أسعار مواعيد التسليم</div>
+                <div class="form-group">
+                    <label>خيار موعد التسليم</label>
+                    <select id="deliveryOption">
+                        <option value="تسليم اليوم (شحن سريع جداً)">تسليم اليوم (شحن سريع جداً)</option>
+                        <option value="تسليم غداً (شحن عادي)">تسليم غداً (شحن عادي)</option>
+                        <option value="خلال يومين إلى 3 أيام">خلال يومين إلى 3 أيام</option>
+                        <option value="تسليم مخصص/محدد لاحقاً">تسليم مخصص/محدد لاحقاً</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>التكلفة الإضافية للموعد (ج.م)</label>
+                    <input type="number" id="deliveryPrice" placeholder="مثال: 20 ج.م إضافية لليوم">
+                </div>
+                <button style="width: 100%; justify-content: center;" onclick="saveDeliveryOption()">حفظ تسعيرة الموعد ⏳</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div id="invoiceModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeInvoice()">&times;</span>
+        <div class="invoice-box" id="printArea">
+            <div class="invoice-header">
+                <div>
+                    <h2>صيدلية د. أحمد البيطرية 🐾</h2>
+                    <p>فاقوس - الشرقية | هاتف الإدارة</p>
+                </div>
+                <div style="text-align: left;">
+                    <h3 style="color: var(--primary);">فاتورة طلب رقم: <span id="invId"></span></h3>
+                    <p>التاريخ: <span id="invDate"></span></p>
+                </div>
+            </div>
+            
+            <div class="invoice-details">
+                <div><strong>اسم العميل:</strong> <span id="invCustomer"></span></div>
+                <div><strong>الهاتف الأساسي:</strong> <span id="invPhone1"></span></div>
+                <div><strong>الهاتف الاحتياطي:</strong> <span id="invPhone2"></span></div>
+                <div><strong>العنوان:</strong> <span id="invAddress"></span></div>
+                <div style="grid-column: span 2;"><strong>موعد التسليم المختار:</strong> <span id="invDeliveryTime"></span></div>
+            </div>
+
+            <h3 style="margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom:5px;">الأصناف المطلوبة:</h3>
+            <div id="invItems" style="margin-bottom: 20px;"></div>
+
+            <div style="border-top: 2px solid #e2e8f0; padding-top: 10px; text-align: left; font-size: 1.05rem;">
+                <div>المجموع الفرعي: <span id="invSubTotal"></span> ج.م</div>
+                <div>تكلفة الشحن المتفق عليها: +<span id="invShipping"></span> ج.م</div>
+                <div style="color:var(--success);">الخصومات المطبقة: -<span id="invDiscount"></span> ج.م</div>
+                <div style="font-weight: 700; color:var(--primary); font-size:1.3rem; margin-top:5px;">الإجمالي النهائي: <span id="invFinalTotal"></span> ج.م</div>
+                <p style="font-size:0.8rem; color:#777; margin-top:5px;">شركة الشحن الموكلة: <span id="invCompany"></span></p>
+            </div>
+        </div>
+        <div style="margin-top: 20px; display:flex; justify-content:flex-end; gap:10px;">
+            <button onclick="window.print()" style="background:var(--success)">طباعة الفاتورة 🖨️</button>
+            <button onclick="closeInvoice()" style="background:var(--danger)">إغلاق</button>
+        </div>
+    </div>
+</div>
+
+<div id="shippingModal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+        <span class="close-modal" onclick="closeShippingModal()">&times;</span>
+        <h2 style="color: var(--primary); margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px;">🚚 قائمة شركات الشحن وتغطية المحافظات</h2>
+        <div class="table-responsive">
+            <table style="min-width: 100%;">
+                <thead>
+                    <tr>
+                        <th>المحافظة</th>
+                        <th>المدينة / المركز</th>
+                        <th>تكلفة الشحن</th>
+                        <th>اسم شركة الشحن</th>
+                    </tr>
+                </thead>
+                <tbody id="shippingTableBody">
+                    <tr><td colspan="4" style="text-align: center; padding: 20px;">لا توجد شركات شحن مسجلة حالياً.</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+            <button onclick="closeShippingModal()" style="background: var(--danger)">إغلاق</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyIIQFvZ1GvVLWWvWFxEmLwP4ksgXbXO5K8As9PxCh2sIysTkLYVtvu7-WwirC-5NhiJw/exec";
+    let allOrders = [];
+    let currentShippingConfig = [];
+
+    // دالة سحب كل البيانات الحية وعرضها بالجدول
+    function loadDashboardData() {
+        const ordersBody = document.getElementById('ordersTableBody');
+        ordersBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 30px;">جاري سحب وتحديث جداول الفواتير من السيرفر...</td></tr>';
+
+        fetch(SCRIPT_URL)
+        .then(res => res.json())
+        .then(db => {
+            allOrders = db.orders || [];
+            currentShippingConfig = db.shippingConfig || [];
+            
+            buildDaysButtons();
+            renderOrdersTable(allOrders);
+            renderShippingTable();
+
+            // عرض الكوبونات النشطة والمطورة
+            const couponsList = document.getElementById('activeCouponsList');
+            couponsList.innerHTML = '';
+            if(db.coupons && db.coupons.length > 0){
+                db.coupons.forEach(c => {
+                    let infoStr = `كود: <strong>${c.code || c.Coupon_Code}</strong> | خصم: <strong>${parseFloat(c.discountPercentage || c.Discount_Percentage) * 100}%</strong>`;
+                    if(c.maxUses && c.maxUses !== "غير محدد") infoStr += ` | المتاح: <strong>${c.maxUses}</strong>`;
+                    if(c.expiryDate && c.expiryDate !== "غير محدد") infoStr += ` | ينتهي: <strong>${c.expiryDate}</strong>`;
+                    
+                    couponsList.innerHTML += `<li style="background:#f1f5f9; padding:8px; border-radius:6px; border-right:3px solid var(--accent); list-style:none;">
+                        ${infoStr}
+                    </li>`;
+                });
+            } else {
+                couponsList.innerHTML = '<li style="color:var(--text); opacity: 0.6; list-style:none;">لا توجد كوبونات مفعّلة حالياً.</li>';
+            }
+        })
+        .catch(err => {
+            ordersBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--danger);">خطأ في جلب البيانات من شيت جوجل.</td></tr>';
+        });
+    }
+
+    function buildDaysButtons() {
+        const container = document.getElementById('daysContainer');
+        container.innerHTML = '<button class="btn-day active" id="btn-all" onclick="filterOrdersByDay(\'all\')">كل الأيام</button>';
+        
+        let daysSet = new Set();
+        allOrders.forEach(o => {
+            if(o.date) {
+                let datePart = o.date.split(' ')[0] || o.date.split('T')[0];
+                if(datePart) daysSet.add(datePart);
+            }
+        });
+
+        daysSet.forEach(day => {
+            container.innerHTML += `<button class="btn-day" id="btn-${day}" onclick="filterOrdersByDay('${day}')">${day}</button>`;
+        });
+    }
+
+    function filterOrdersByDay(day) {
+        document.querySelectorAll('.btn-day').forEach(b => b.classList.remove('active'));
+        if(day === 'all') {
+            document.getElementById('btn-all').classList.add('active');
+            renderOrdersTable(allOrders);
+        } else {
+            const exactBtn = document.getElementById(`btn-${day}`);
+            if(exactBtn) exactBtn.classList.add('active');
+            let filtered = allOrders.filter(o => o.date && o.date.includes(day));
+            renderOrdersTable(filtered);
+        }
+    }
+
+    function renderOrdersTable(ordersList) {
+        const ordersBody = document.getElementById('ordersTableBody');
+        ordersBody.innerHTML = '';
+        
+        if(ordersList.length === 0) {
+            ordersBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">لا توجد فواتير أو طلبات مسجلة لهذا الاختيار.</td></tr>';
+            return;
+        }
+
+        ordersList.forEach(order => {
+            ordersBody.innerHTML += `
+                <tr class="clickable-row">
+                    <td onclick="openInvoice('${order.orderId}')">
+                        <strong>${order.orderId}</strong><br>
+                        <small style="color:#777;">${order.date || ''}</small>
+                    </td>
+                    <td onclick="openInvoice('${order.orderId}')">
+                        <strong>${order.customerName}</strong><br>
+                        <span style="font-size:0.85rem; color:var(--primary);">📞 ${order.phone1}</span>
+                    </td>
+                    <td onclick="openInvoice('${order.orderId}')">
+                        <strong>محافظة ${order.governorate} - ${order.city}</strong><br>
+                        <span class="badge" style="background:#e0f2fe; color:#0369a1;">⏰ ${order.deliveryDateTime || 'غير محدد'}</span>
+                    </td>
+                    <td onclick="openInvoice('${order.orderId}')">
+                        <strong>الإجمالي: ${order.finalTotal} ج.م</strong>
+                    </td>
+                    <td>
+                        <select class="status-select" id="status-${order.orderId}">
+                            <option value="قيد المراجعة والتحضير بالصيدلية" ${order.status && order.status.includes('المراجعة')?'selected':''}>قيد المراجعة</option>
+                            <option value="تم تسليم الشحنة لشركة الشحن" ${order.status && order.status.includes('تسليم')?'selected':''}>جاري الشحن</option>
+                            <option value="تم التوصيل بنجاح للعميل" ${order.status && order.status.includes('التوصيل')?'selected':''}>تم التوصيل ✅</option>
+                            <option value="تم إلغاء الطلب" ${order.status && order.status.includes('إلغاء')?'selected':''}>ملغي ❌</option>
+                        </select>
+                    </td>
+                    <td><button onclick="updateStatus('${order.orderId}')" style="padding:6px 12px; font-size:0.8rem;">تحديث</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    function renderShippingTable() {
+        const body = document.getElementById('shippingTableBody');
+        body.innerHTML = '';
+        if(currentShippingConfig.length === 0) {
+            body.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">لا توجد شركات شحن مسجلة حالياً.</td></tr>';
+            return;
+        }
+        currentShippingConfig.forEach(config => {
+            body.innerHTML += `
+                <tr>
+                    <td><strong>${config.governorate}</strong></td>
+                    <td>${config.city || 'كل المراكز'}</td>
+                    <td><strong style="color: var(--success);">${config.shippingCost || config.Shipping_Cost} ج.م</strong></td>
+                    <td><span class="badge" style="background: #e0f2fe; color: #0369a1; padding: 6px 12px; font-size:0.85rem;">🚛 ${config.companyName || config.Company_Name}</span></td>
+                </tr>
+            `;
+        });
+    }
+
+    function openInvoice(orderId) {
+        let order = allOrders.find(o => o.orderId == orderId);
+        if(!order) return;
+
+        document.getElementById('invId').innerText = order.orderId;
+        document.getElementById('invDate').innerText = order.date || '';
+        document.getElementById('invCustomer').innerText = order.customerName;
+        document.getElementById('invPhone1').innerText = order.phone1;
+        document.getElementById('invPhone2').innerText = order.phone2 || 'لا يوجد';
+        document.getElementById('invAddress').innerText = `محافظة ${order.governorate} - ${order.city} - ${order.addressDetails || ''}`;
+        document.getElementById('invDeliveryTime').innerText = order.deliveryDateTime || 'غير محدد';
+        document.getElementById('invSubTotal').innerText = order.subTotal;
+        document.getElementById('invShipping').innerText = order.shippingCost;
+        document.getElementById('invDiscount').innerText = order.discount || '0';
+        document.getElementById('invFinalTotal').innerText = order.finalTotal;
+        document.getElementById('invCompany').innerText = order.shippingCompany || 'البريد السريع';
+
+        let itemsHtml = '<div class="cart-details-box">';
+        if(order.cartDetails) {
+            try {
+                let parsedCart = typeof order.cartDetails === 'string' ? JSON.parse(order.cartDetails) : order.cartDetails;
+                if(Array.isArray(parsedCart)) {
+                    parsedCart.forEach(item => {
+                        itemsHtml += `<div class="cart-item-line"><span>💊 ${item.name}</span><strong>الكمية: × ${item.quantity}</strong></div>`;
+                    });
+                } else { itemsHtml += order.cartDetails; }
+            } catch(e) { itemsHtml += order.cartDetails; }
+        } else { itemsHtml += 'لا تتوفر أدوية مسجلة'; }
+        itemsHtml += '</div>';
+        
+        document.getElementById('invItems').innerHTML = itemsHtml;
+        document.getElementById('invoiceModal').style.display = "block";
+    }
+
+    function closeInvoice() { document.getElementById('invoiceModal').style.display = "none"; }
+    function openShippingModal() { document.getElementById('shippingModal').style.display = "block"; }
+    function closeShippingModal() { document.getElementById('shippingModal').style.display = "none"; }
+
+    function updateStatus(orderId) {
+        const newStatus = document.getElementById(`status-${orderId}`).value;
+        fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({ action: "updateOrderStatus", data: { orderId: orderId, status: newStatus } })
+        });
+        alert("تم إرسال أمر التحديث إلى شيت السيرفر بنجاح!");
+        setTimeout(loadDashboardData, 1500);
+    }
+
+    function createNewCoupon() {
+        const code = document.getElementById('newCouponCode').value.trim();
+        const discount = document.getElementById('newCouponDiscount').value.trim();
+        const maxUses = document.getElementById('couponMaxUses').value.trim();
+        const expiryDate = document.getElementById('couponExpiryDate').value;
+        const durationDays = document.getElementById('couponDurationDays').value.trim();
+
+        if(!code || !discount) return alert("يرجى إدخال الكود ونسبة الخصم الأساسية!");
+
+        fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({ 
+                action: "addCoupon", 
+                data: { 
+                    code: code, 
+                    discountPercentage: parseFloat(discount),
+                    maxUses: maxUses || "غير محدد",
+                    expiryDate: expiryDate || "غير محدد",
+                    durationDays: durationDays || "غير محدد"
+                } 
+            })
+        });
+        alert("تم إرسال الكوبون المطور لتفعيله على السيرفر!");
+        setTimeout(loadDashboardData, 1500);
+    }
+
+    // [تعديل هام للتوافق مع السيرفر الحقيقي]: تم استبدال dataArr بالمتغير المتوقع data
+    function addShippingConfig() {
+        const gov = document.getElementById('shipGov').value;
+        const city = document.getElementById('shipCity').value.trim();
+        const cost = document.getElementById('shipCost').value.trim();
+        const comp = document.getElementById('shipCompany').value.trim();
+
+        if(!gov || !cost || !comp) return alert("يرجى ملء البيانات لتكويد الشحن بنجاح!");
+
+        currentShippingConfig.push({ governorate: gov, city: city, shippingCost: parseFloat(cost), companyName: comp });
+
+        fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({ action: "updateShippingConfig", data: currentShippingConfig })
+        });
+        alert("تم إرسال تسعيرة الشحن الجديدة وتحديث المحافظة بالسيرفر!");
+        setTimeout(loadDashboardData, 1500);
+    }
+
+    // [تعديل هام للتوافق مع السيرفر الحقيقي]: تم استبدال dataArr بالمتغير المتوقع data
+    function saveDeliveryOption() {
+        const opt = document.getElementById('deliveryOption').value;
+        const price = document.getElementById('deliveryPrice').value.trim();
+
+        if(!price) return alert("أدخل سعر موعد التسليم!");
+
+        fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({ action: "updateSettings", data: [{ key: "delivery_cost_" + opt, value: price }] })
+        });
+        alert("تم تحديث إعدادات أسعار التوصيل على السيرفر!");
+        setTimeout(loadDashboardData, 1500);
+    }
+
+    window.onload = loadDashboardData;
+</script>
+</body>
+</html>
